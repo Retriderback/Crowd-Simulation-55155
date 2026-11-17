@@ -12,6 +12,51 @@ public class Flock : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        ApplyRules();
         this.transform.Translate(0,0,speed * Time.deltaTime);
+
+    }
+
+    void ApplyRules()
+    {
+        GameObject[] gos;
+        gos = FlockManager.FM.allFish;
+
+        Vector3 vcentre = Vector3.zero;
+        Vector3 vavoid = Vector3.zero;
+        float gSpeed = 0.01f;
+        float nDistance;
+        int groupsize = 0;
+
+        foreach(GameObject go in gos)
+        {
+            if(go!=this.gameObject)
+            {
+                nDistance = Vector3.Distance(go.transform.position, this.transform.position);
+                if(nDistance<=FlockManager.FM.neighbourDist)
+                {
+                    vcentre += go.transform.position;
+                    groupsize++;
+
+                    if(nDistance<1.0f)
+                    {
+                        vavoid=vavoid+(this.transform.position - go.transform.position);
+                    }
+
+                    Flock anotherFlock = go.GetComponent<Flock>();
+                    gSpeed = gSpeed + anotherFlock.speed;
+                }
+            }
+        }
+
+        if(groupsize > 0)
+        {
+            vcentre = vcentre/groupsize;
+            speed = gSpeed/groupsize;
+
+            Vector3 direction = (vcentre+vavoid) - transform.position;
+            if(direction!=Vector3.zero)
+                transform.rotation = Quaternion.Slerp(transform.rotation,Quaternion.LookRotation(direction),FlockManager.FM.rotationSpeed * Time.deltaTime);
+        }
     }
 }
